@@ -6,6 +6,7 @@ Bu proje, i2i Systems staj başvurusu kapsamında, OMDB API'sini kullanarak film
 Projenin çalışan haline buradan ulaşabilirsiniz: (https://ozonurzorlu.github.io/ombd-project/)
 
 Öne Çıkan Özellikler
+
 Single Page Application (SPA): Tüm işlemler sayfa yenilenmeden gerçekleşir.
 
 Responsive Tasarım: Bootstrap 5 kullanılarak mobil, tablet ve masaüstü cihazlarla tam uyumlu hale getirilmiştir.
