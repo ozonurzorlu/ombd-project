@@ -24,11 +24,3 @@ Framework/Library: Bootstrap 5 (Hızlı ve modern UI için)
 
 Veri Kaynağı: OMDB (Open Movie Database) API
 
-Kurulum
-Projeyi yerel bilgisayarınızda çalıştırmak isterseniz:
-
-Depoyu klonlayın veya indirin.
-
-script.js dosyasının en üstündeki API_KEY değişkenine kendi OMDB API anahtarınızı ekleyin.
-
-index.html dosyasını tarayıcınızda açın.
