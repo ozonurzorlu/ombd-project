@@ -1,10 +1,11 @@
 🎬 OMDB Movie Search Application (i2i Systems Case Study)
+
 Bu proje, i2i Systems staj başvurusu kapsamında, OMDB API'sini kullanarak film bilgilerini listeleyen, modern ve duyarlı (responsive) bir web uygulaması olarak geliştirilmiştir. Uygulama, kullanıcıların film araması yapmasına, sonuçları filtrelemesine ve detaylı film bilgilerine ulaşmasına olanak tanır.
 
-🚀 Canlı Önizleme
-Projenin çalışan haline buradan ulaşabilirsiniz: [CANLI LINKINIZI BURAYA YAPIŞTIRIN]
 
-✨ Öne Çıkan Özellikler
+Projenin çalışan haline buradan ulaşabilirsiniz: (https://ozonurzorlu.github.io/ombd-project/)
+
+Öne Çıkan Özellikler
 Single Page Application (SPA): Tüm işlemler sayfa yenilenmeden gerçekleşir.
 
 Responsive Tasarım: Bootstrap 5 kullanılarak mobil, tablet ve masaüstü cihazlarla tam uyumlu hale getirilmiştir.
@@ -15,14 +16,14 @@ Veri Kalıcılığı (LocalStorage): Kullanıcı sayfayı yenilese dahi yaptığ
 
 Hata Yönetimi: Geçersiz aramalar veya API kaynaklı sorunlar kullanıcıya şık bir arayüzle bildirilir.
 
-🛠️ Kullanılan Teknolojiler
+Kullanılan Teknolojiler
 Frontend: HTML5, CSS3, JavaScript (ES6+)
 
 Framework/Library: Bootstrap 5 (Hızlı ve modern UI için)
 
 Veri Kaynağı: OMDB (Open Movie Database) API
 
-📂 Kurulum
+Kurulum
 Projeyi yerel bilgisayarınızda çalıştırmak isterseniz:
 
 Depoyu klonlayın veya indirin.
