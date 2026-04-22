@@ -3,62 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OMDB Film Arama</title>
+    <title>Film Arama Motoru</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
         body { 
-            background-color: #f4f6f9; 
+            background: linear-gradient(rgba(10, 15, 25, 0.90), rgba(10, 15, 25, 0.90)), 
+                        url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=2070&auto=format&fit=crop') center center fixed;
+            background-size: cover;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e2e8f0; 
+            min-height: 100vh;
         }
+
+        /* ########## HOLLYWOOD BAŞLIK ########## */
+        .title-cinematic {
+            color: #e5c07b !important;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.9), 0 0 30px rgba(229, 192, 123, 0.4);
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* ########## VIP ARAMA KART ALANI ########## */
+        .search-card {
+            background: linear-gradient(145deg, rgba(20,20,20,0.85), rgba(0,0,0,0.95)) !important;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(229, 192, 123, 0.2) !important;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 15px rgba(229, 192, 123, 0.05);
+        }
+
+        .cinematic-input {
+            background-color: rgba(10, 10, 10, 0.7) !important;
+            color: #e5c07b !important;
+            border: 1px solid rgba(229, 192, 123, 0.3) !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .cinematic-input::placeholder {
+            color: rgba(229, 192, 123, 0.4) !important;
+        }
+
+        .cinematic-input:focus {
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border-color: #e5c07b !important;
+            box-shadow: 0 0 15px rgba(229, 192, 123, 0.3) !important;
+            outline: none;
+        }
+
+        .cinematic-input option {
+            background-color: #111;
+            color: #e5c07b;
+        }
+
+        /* ########## ARAMA BUTONU (PARLAMA KALDIRILDI) ########## */
+        .btn-cinematic-search {
+            position: relative;
+            background: linear-gradient(145deg, #131313, #000000);
+            color: #e5c07b !important;
+            border: 1px solid rgba(229, 192, 123, 0.6);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(229, 192, 123, 0.1);
+            width: 100%;
+            height: 100%;
+        }
+
+        .btn-cinematic-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(229, 192, 123, 0.4), inset 0 0 10px rgba(229, 192, 123, 0.2);
+            color: #ffffff !important;
+            border-color: #ffffff;
+            background: linear-gradient(145deg, #222222, #0a0a0a);
+        }
+
+        /* Hover edildiğinde hafif bir ışık efekti kalacak, sürekli yanıp sönmeyecek */
+        .btn-cinematic-search::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -150%; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            z-index: -1;
+            transition: all 0.5s ease;
+        }
+        .btn-cinematic-search:hover::before {
+            left: 150%;
+        }
+
         .movie-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             border-radius: 12px;
             overflow: hidden;
+            border: 1px solid rgba(229, 192, 123, 0.3) !important;
+            background-color: rgba(20,20,20,0.85) !important;
         }
+
         .movie-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(229, 192, 123, 0.2);
         }
+
         .movie-poster { 
-            width: 100%;
-            height: 450px; 
-            object-fit: cover; 
+            width: 100%; height: 450px; object-fit: cover; 
+        }
+
+        /* ########## PREMIUM SİNEMA BUTONU (ANA BUTON) ########## */
+        .btn-cinematic {
+            position: relative;
+            background: linear-gradient(145deg, #131313, #000000);
+            color: #e5c07b !important; 
+            border: 2px solid #e5c07b;
+            border-radius: 50px;
+            padding: 16px 45px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            cursor: pointer;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 20px rgba(229, 192, 123, 0.2), inset 0 0 10px rgba(229, 192, 123, 0.1);
+        }
+
+        .btn-cinematic:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 15px 30px rgba(229, 192, 123, 0.5), inset 0 0 20px rgba(229, 192, 123, 0.3);
+            color: #ffffff !important;
+            border-color: #ffffff;
+            background: linear-gradient(145deg, #222222, #0a0a0a);
+        }
+
+        .btn-cinematic::before {
+            content: ""; position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg); z-index: -1; animation: shineSweep 4s infinite;
+        }
+
+        @keyframes shineSweep {
+            0% { left: -150%; } 20% { left: 150%; } 100% { left: 150%; }
+        }
+
+        .btn-cinematic:disabled {
+            background: #111; border-color: #333; color: #555 !important;
+            box-shadow: none; transform: none; cursor: not-allowed;
+        }
+        .btn-cinematic:disabled::before { animation: none; }
+
+        /* ########## NOSTALJİK PROJEKSİYON EFEKTİ ########## */
+        #projectorOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #050505; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease; overflow: hidden;
+        }
+
+        .projector-active { opacity: 1 !important; pointer-events: all !important; }
+
+        .film-strip {
+            position: absolute; top: 0; bottom: 0; width: clamp(60px, 10vw, 130px); 
+            background-color: #121212; 
+            background-image: radial-gradient(circle at center, rgba(255, 248, 220, 0.95) 18px, transparent 19px);
+            background-size: 100% 85px; background-position: center 0;
+            box-shadow: 0 0 40px rgba(0,0,0,1); z-index: 1000;
+        }
+
+        .projector-active .film-strip { animation: filmFlow 0.7s linear infinite; }
+        @keyframes filmFlow { from { background-position: center 0; } to { background-position: center 85px; } }
+
+        .film-strip.left { left: 0; border-right: 4px solid #222; }
+        .film-strip.right { right: 0; border-left: 4px solid #222; }
+
+        #countdownCircle {
+            width: 200px; height: 200px; border: 4px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 100px; color: #fff; font-family: 'Courier New', Courier, monospace;
+            font-weight: bold; position: relative; animation: filmFlicker 0.15s infinite;
+        }
+
+        #countdownCircle::after {
+            content: ""; position: absolute; top: 0; left: 50%; width: 4px; height: 50%;
+            background-color: rgba(255, 255, 255, 0.8); transform-origin: bottom center;
+            animation: sweepClock 1s linear infinite;
+        }
+
+        #countdownCircle::before {
+            content: "+"; position: absolute; font-size: 200px; color: rgba(255, 255, 255, 0.2); font-weight: 100;
+        }
+
+        #winnerPresentation {
+            display: none; flex-direction: column; align-items: center;
+            animation: projectorFlash 0.8s ease-out forwards; z-index: 10;
+        }
+
+        @keyframes sweepClock { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes filmFlicker {
+            0% { opacity: 0.85; filter: sepia(0.5) contrast(1.2); transform: translateY(0px); }
+            50% { opacity: 1; filter: sepia(0.3) contrast(1); transform: translateY(-1px); }
+            100% { opacity: 0.75; filter: sepia(0.6) contrast(1.5) brightness(1.2); transform: translateY(1px); }
+        }
+        @keyframes projectorFlash {
+            0% { filter: brightness(10) blur(20px) sepia(1); transform: scale(0.7); }
+            50% { filter: brightness(2) blur(5px) sepia(0.5); }
+            100% { filter: brightness(1) blur(0px) sepia(0); transform: scale(1.05); }
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center mb-4 fw-bold text-primary">🎬 Film Arama Motoru</h1>
 
-        <div class="card shadow-sm p-4 mb-4 border-0 rounded-4">
-            <form id="searchForm" class="row g-3">
+    <div id="projectorOverlay">
+        <div class="film-strip left"></div>
+        <div class="film-strip right"></div>
+
+        <div id="countdownCircle">
+            <span id="countNumber">3</span>
+        </div>
+
+        <div id="winnerPresentation">
+            <h2 class="text-white mb-4" style="letter-spacing: 4px; font-weight: bold; text-shadow: 0 0 15px rgba(255,255,255,0.8);">GÜNÜN ŞANSLI FİLMİ</h2>
+            <img id="presentationPoster" src="" alt="Winner" style="height: 450px; border-radius: 10px; box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); border: 2px solid #3b82f6;">
+        </div>
+    </div>
+
+    <div class="container mt-5 pb-5">
+        <h1 class="text-center mb-4 title-cinematic">FİLM & DİZİ ARAMA MOTORU</h1>
+
+        <div class="search-card p-4 mb-4">
+            <form id="searchForm" class="row g-3 justify-content-center">
                 <div class="col-md-6">
-                    <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Film adı girin (Örn: Matrix)..." required>
+                    <input type="text" id="searchInput" class="form-control form-control-lg cinematic-input" placeholder="Film adı girin (Örn: Eternal Sunshine Of The Spotless Mind)..." required autofocus>
                 </div>
                 <div class="col-md-3">
-                    <select id="typeFilter" class="form-select form-select-lg">
+                    <select id="typeFilter" class="form-select form-select-lg cinematic-input">
                         <option value="">Tüm Türler</option>
                         <option value="movie">Film</option>
                         <option value="series">Dizi</option>
-                        <option value="episode">Bölüm</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm">Ara</button>
+                    <button type="submit" class="btn-cinematic-search">🔍 ARA</button>
                 </div>
             </form>
         </div>
 
-        <div id="errorMessage" class="alert alert-danger d-none shadow-sm rounded-3" role="alert"></div>
+        <div class="d-flex justify-content-center mb-5 mt-4">
+            <button id="suggestButton" class="btn-cinematic">
+                🎬 BANA BİR FİLM ÖNER
+            </button>
+        </div>
 
         <div id="loadingSpinner" class="text-center d-none my-5">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Yükleniyor...</span>
             </div>
         </div>
 
-        <div id="movieResults" class="row justify-content-center">
-            </div>
+        <div id="movieResults" class="row justify-content-center"></div>
     </div>
 
     <script src="script.js"></script>
