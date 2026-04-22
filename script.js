@@ -1,111 +1,203 @@
-// OMDB API Anahtarını buraya yazmalısın
 const API_KEY = 'dbc23af8'; 
 
-// HTML'deki elementleri (kutuları, butonları) JavaScript'e tanıtıyoruz
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
 const typeFilter = document.getElementById('typeFilter');
+const suggestButton = document.getElementById('suggestButton');
 const movieResults = document.getElementById('movieResults');
-const errorMessage = document.getElementById('errorMessage');
 const loadingSpinner = document.getElementById('loadingSpinner');
 
-// 1. Sayfa ilk açıldığında çalışacak kod (LocalStorage Kontrolü)
-// Eğer kullanıcı daha önce bir film aratmışsa, sayfayı yenilediğinde o film tekrar gelsin (Bonus Puan!)
+const projectorOverlay = document.getElementById('projectorOverlay');
+const countdownCircle = document.getElementById('countdownCircle');
+const countNumber = document.getElementById('countNumber');
+const winnerPresentation = document.getElementById('winnerPresentation');
+const presentationPoster = document.getElementById('presentationPoster');
+
+const topMovies = [
+    "The Godfather", "Eternal Sunshine Of The Spotless Mind", "Pulp Fiction", "Fight Club", "Interstellar", 
+    "The Matrix", "Goodfellas", "Inception", "Parasite", "Inside Out", "Cast Away",
+    "The Green Mile", "Spirited Away", "Whiplash", "The Departed",
+    "Gladiator", "The Prestige", "The Lord of the Rings"
+];
+
+const fallbackPoster = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='350' style='background-color:%231e293b;'%3E%3Ctext y='50%25' x='50%25' dominant-baseline='middle' text-anchor='middle' font-size='30' fill='white' font-family='sans-serif'%3EAfis Yok%3C/text%3E%3C/svg%3E";
+
+// ########## TÜRKÇE KARAKTER DÜZELTİCİ ##########
+function sanitizeTurkishChars(text) {
+    return text.replace(/İ/g, 'I').replace(/ı/g, 'i')
+               .replace(/Ş/g, 'S').replace(/ş/g, 's')
+               .replace(/Ğ/g, 'G').replace(/ğ/g, 'g')
+               .replace(/Ç/g, 'C').replace(/ç/g, 'c')
+               .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+               .replace(/Ü/g, 'U').replace(/ü/g, 'u');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const lastSearch = localStorage.getItem('lastMovieSearch');
     const lastType = localStorage.getItem('lastTypeFilter');
-
     if (lastSearch) {
         searchInput.value = lastSearch;
         if (lastType) typeFilter.value = lastType;
-        // Hafızadaki kelimeyle otomatik arama yap
-        fetchMovieData(lastSearch, lastType); 
+        fetchMovieData(sanitizeTurkishChars(lastSearch), lastType, false); 
     }
 });
 
-// 2. Kullanıcı "Ara" butonuna bastığında çalışacak kod
 searchForm.addEventListener('submit', function(event) {
-    event.preventDefault(); // Sayfanın yenilenmesini engeller (SPA kuralı)
-
-    const searchTerm = searchInput.value.trim();
+    event.preventDefault(); 
+    const rawSearchTerm = searchInput.value.trim();
+    const cleanSearchTerm = sanitizeTurkishChars(rawSearchTerm);
     const type = typeFilter.value;
-
-    if (searchTerm !== '') {
-        // Son aramayı tarayıcı hafızasına (LocalStorage) kaydet
-        localStorage.setItem('lastMovieSearch', searchTerm);
-        localStorage.setItem('lastTypeFilter', type);
-        
-        // Veri çekme fonksiyonunu başlat
-        fetchMovieData(searchTerm, type);
+    
+    if (cleanSearchTerm !== '') {
+        fetchMovieData(cleanSearchTerm, type, true); 
     }
 });
 
-// 3. OMDB API'den Veri Çekme Fonksiyonu
-// async/await kullanarak modern ve temiz bir yapı kurduk
-async function fetchMovieData(title, type) {
-    // Önce ekranı temizle ve yükleniyor animasyonunu göster
+// ########## BANA FİLM ÖNER BUTONU ##########
+suggestButton.addEventListener('click', () => {
     movieResults.innerHTML = '';
-    errorMessage.classList.add('d-none');
+    suggestButton.disabled = true;
+    suggestButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> FİLM SARILIYOR...';
+
+    countdownCircle.style.display = 'flex';
+    winnerPresentation.style.display = 'none';
+    projectorOverlay.classList.add('projector-active');
+
+    const randomTitle = topMovies[Math.floor(Math.random() * topMovies.length)];
+    const fetchPromise = fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(randomTitle)}&apikey=${API_KEY}`)
+                            .then(response => response.json());
+
+    let countdownVal = 3;
+    countNumber.innerText = countdownVal;
+
+    const timer = setInterval(() => {
+        countdownVal--;
+        
+        if (countdownVal > 0) {
+            countNumber.innerText = countdownVal;
+        } else {
+            clearInterval(timer);
+            countdownCircle.style.display = 'none';
+
+            fetchPromise.then(movieData => {
+                const finalPoster = (movieData.Response !== "False" && movieData.Poster !== "N/A") 
+                                    ? movieData.Poster : fallbackPoster;
+                presentationPoster.onerror = function() { this.onerror = null; this.src = fallbackPoster; };
+                presentationPoster.src = finalPoster;
+                winnerPresentation.style.display = 'flex';
+
+                setTimeout(() => {
+                    projectorOverlay.classList.remove('projector-active');
+                    displayMovie(movieData); 
+                    suggestButton.disabled = false;
+                    suggestButton.innerHTML = '🎬 BANA BİR FİLM ÖNER';
+                }, 2500);
+
+            }).catch(err => {
+                console.error(err);
+                projectorOverlay.classList.remove('projector-active');
+                suggestButton.disabled = false;
+                suggestButton.innerHTML = '🎬 BANA BİR FİLM ÖNER';
+            });
+        }
+    }, 1000); 
+});
+
+// ########## KUSURSUZ (BULLETPROOF) ARAMA MANTIĞI ##########
+async function fetchMovieData(title, type, updateLocalStorage) {
+    movieResults.innerHTML = '';
     loadingSpinner.classList.remove('d-none');
 
     try {
-        // OMDB'ye isteği atıyoruz (t= parametresi ile tam isim araması yapıyoruz ki yönetmen/tür detayları gelsin)
-        const response = await fetch(`https://www.omdbapi.com/?t=${title}&type=${type}&apikey=${API_KEY}`);
-        const data = await response.json();
+        const encodedTitle = encodeURIComponent(title);
+        
+        // ZEKİCE DOKUNUŞ: Type parametresi boşsa OMDB API sapıtabiliyor. Boşsa URL'ye hiç eklemiyoruz!
+        const typeParam = type !== "" ? `&type=${type}` : "";
+        
+        // 1. Aşama: Tam İsim Araması
+        let response = await fetch(`https://www.omdbapi.com/?t=${encodedTitle}${typeParam}&apikey=${API_KEY}`);
+        let data = await response.json();
 
-        // Yükleniyor animasyonunu gizle
-        loadingSpinner.classList.add('d-none');
-
-        // Eğer API "Bulamadım" (False) derse hata göster
+        // 2. Aşama: Eğer tam uymuyorsa (Örn: "incep" yazıldıysa) Kısmi Arama yap!
         if (data.Response === "False") {
-            showError("Aradığınız film bulunamadı. Lütfen başka bir isim deneyin.");
-        } else {
-            // Film bulunduysa ekrana bas
-            displayMovie(data);
+            let searchResponse = await fetch(`https://www.omdbapi.com/?s=${encodedTitle}${typeParam}&apikey=${API_KEY}`);
+            let searchData = await searchResponse.json();
+
+            // Eğer "Too many results" değil de gerçekten filmler bulduysa, İLK sıradakini al
+            if (searchData.Response === "True" && searchData.Search && searchData.Search.length > 0) {
+                const firstMatchId = searchData.Search[0].imdbID;
+                const detailResponse = await fetch(`https://www.omdbapi.com/?i=${firstMatchId}&apikey=${API_KEY}`);
+                data = await detailResponse.json();
+            } else {
+                // Kısmi arama da patladıysa (Too many results vb.), hatayı yakala
+                data = searchData; 
+            }
         }
 
-    } catch (error) {
-        // İnternet kopması gibi beklenmedik hataları yakala
         loadingSpinner.classList.add('d-none');
-        showError("Sunucuya bağlanırken bir hata oluştu. Lütfen bağlantınızı kontrol edin.");
+
+        if (data.Response === "False") {
+            // SİNYAL (Hata Yakalama): API'nin tam olarak neden kızdığını ekrana yazdırıyoruz (Gerçek profesyonellik)
+            let errorMsg = data.Error === "Movie not found!" 
+                ? `"${title}" ile eşleşen bir film bulamadık.` 
+                : `Sistem Yanıtı: ${data.Error}`;
+            
+            // OMDB çok kısa kelimelerde bu hatayı verir
+            if(data.Error === "Too many results.") {
+                errorMsg = `"${title}" araması için çok fazla sonuç var. Lütfen biraz daha detaylı yazın.`;
+            }
+
+            Swal.fire({
+                icon: 'error', title: 'Bulunamadı', text: errorMsg,
+                background: '#1a1f2e', color: '#fff', confirmButtonColor: '#e5c07b'
+            });
+        } else {
+            // Sadece %100 başarılı sonuçlar hafızaya kaydedilsin
+            if(updateLocalStorage) {
+                localStorage.setItem('lastMovieSearch', searchInput.value.trim());
+                localStorage.setItem('lastTypeFilter', type);
+            }
+            displayMovie(data);
+        }
+    } catch (error) {
+        loadingSpinner.classList.add('d-none');
+        Swal.fire({
+            icon: 'warning', title: 'Bağlantı Hatası', text: 'Sunucuya bağlanılamadı.',
+            background: '#1a1f2e', color: '#fff', confirmButtonColor: '#e5c07b'
+        });
         console.error("API Hatası:", error);
     }
 }
 
-// 4. Gelen Veriyi Ekrana (HTML'e) Çizdirme Fonksiyonu
 function displayMovie(movie) {
-    // Eğer afiş yoksa (N/A dönüyorsa), varsayılan gri bir resim gösterelim ki tasarım bozulmasın
-    const posterSrc = movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300x450?text=Afis+Yok";
+    const posterSrc = movie.Poster !== "N/A" ? movie.Poster : fallbackPoster;
+    let badgeColor = "bg-warning text-dark"; 
+    let rating = parseFloat(movie.imdbRating);
+    if (!isNaN(rating)) {
+        if (rating >= 7.5) { badgeColor = "bg-success"; } 
+        else if (rating < 6.0) { badgeColor = "bg-danger"; } 
+    }
 
-    // Filmin kart tasarımını oluşturuyoruz
     const movieCard = `
         <div class="col-md-8 col-lg-6 mt-3">
-            <div class="card movie-card shadow-sm border-0">
+            <div class="card movie-card shadow-lg border-0">
                 <div class="row g-0">
                     <div class="col-md-5">
-                        <img src="${posterSrc}" class="img-fluid rounded-start movie-poster" alt="${movie.Title}">
+                        <img src="${posterSrc}" class="img-fluid rounded-start movie-poster" alt="${movie.Title}" onerror="this.onerror=null; this.src='${fallbackPoster}';">
                     </div>
                     <div class="col-md-7">
                         <div class="card-body">
-                            <h3 class="card-title fw-bold">${movie.Title} <span class="text-muted fs-5">(${movie.Year})</span></h3>
-                            <hr>
+                            <h3 class="card-title title-cinematic" style="font-size: 1.8rem;">${movie.Title} <span class="text-white-50 fs-5" style="text-shadow: none;">(${movie.Year})</span></h3>
+                            <hr class="border-secondary">
                             <p class="card-text"><strong>🎬 Tür:</strong> ${movie.Genre}</p>
                             <p class="card-text"><strong>🎥 Yönetmen:</strong> ${movie.Director}</p>
-                            <p class="card-text"><strong>⭐ IMDB Puanı:</strong> <span class="badge bg-warning text-dark">${movie.imdbRating}</span></p>
-                            <p class="card-text mt-3 text-secondary" style="font-size: 0.95rem;">${movie.Plot}</p>
+                            <p class="card-text"><strong>⭐ IMDB:</strong> <span class="badge ${badgeColor}">${movie.imdbRating}</span></p>
+                            <p class="card-text mt-3 text-white-50" style="font-size: 0.95rem;">${movie.Plot}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     `;
-
-    // Oluşturduğumuz kartı HTML'deki boşluğa ekliyoruz
     movieResults.innerHTML = movieCard;
-}
-
-// 5. Hata Mesajı Gösterme Fonksiyonu
-function showError(message) {
-    errorMessage.textContent = message;
-    errorMessage.classList.remove('d-none'); // d-none sınıfını silerek mesajı görünür yap
 }
