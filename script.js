@@ -58,11 +58,45 @@ let activeMediaType = 'movie';
 let favorites = JSON.parse(localStorage.getItem('myMovieFavorites')) || [];
 
 mainTitle.addEventListener('click', () => {
+    localStorage.setItem('lastView', 'vitrin'); // Ana sayfaya dönüldüğünü kaydet
     const populerPill = document.querySelector('[data-category="Populer"]');
     if (populerPill) populerPill.click();
     searchInput.value = '';
     typeFilter.value = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+toggleMovie.addEventListener('change', () => {
+    if(toggleMovie.checked) {
+        activeMediaType = 'movie';
+        localStorage.setItem('lastMediaType', 'movie'); // Medya tipini kaydet
+        refreshGrid();
+    }
+});
+
+toggleSeries.addEventListener('change', () => {
+    if(toggleSeries.checked) {
+        activeMediaType = 'series';
+        localStorage.setItem('lastMediaType', 'series'); // Medya tipini kaydet
+        refreshGrid();
+    }
+});
+
+categoryPills.forEach(pill => {
+    pill.addEventListener('click', (e) => {
+        categoryPills.forEach(p => p.classList.remove('active-pill'));
+        e.target.classList.add('active-pill');
+
+        activeCategory = e.target.getAttribute('data-category');
+        activeCategoryName = e.target.getAttribute('data-name');
+        
+        // Kategori durumunu kaydet
+        localStorage.setItem('lastView', 'vitrin');
+        localStorage.setItem('lastCategory', activeCategory);
+        localStorage.setItem('lastCategoryName', activeCategoryName);
+        
+        refreshGrid();
+    });
 });
 
 let audioCtx;
@@ -271,10 +305,42 @@ function refreshGrid() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateFavoritesUI();
-    activeCategory = 'Populer';
-    activeCategoryName = 'POPÜLER';
-    activeMediaType = 'movie';
-    refreshGrid();
+    
+    // LocalStorage'dan son durumu kontrol et
+    const lastView = localStorage.getItem('lastView');
+    
+    if (lastView === 'search') {
+        // Eğer kullanıcı en son arama yaptıysa, inputları doldur ve aramayı tetikle
+        const savedTerm = localStorage.getItem('lastSearchTerm');
+        const savedType = localStorage.getItem('lastSearchType');
+        
+        if (savedTerm) {
+            searchInput.value = savedTerm;
+            if (savedType) typeFilter.value = savedType;
+            performSearch(savedTerm, savedType); 
+        }
+    } else {
+        // Eğer en son vitrindeyse (veya siteye ilk kez giriliyorsa)
+        activeCategory = localStorage.getItem('lastCategory') || 'Populer';
+        activeCategoryName = localStorage.getItem('lastCategoryName') || 'POPÜLER';
+        activeMediaType = localStorage.getItem('lastMediaType') || 'movie';
+        
+        // UI (Buton/Pill) Senkronizasyonu
+        if (activeMediaType === 'series') {
+            document.getElementById('toggleSeries').checked = true;
+        } else {
+            document.getElementById('toggleMovie').checked = true;
+        }
+        
+        categoryPills.forEach(p => {
+            p.classList.remove('active-pill');
+            if(p.getAttribute('data-category') === activeCategory) {
+                p.classList.add('active-pill');
+            }
+        });
+        
+        refreshGrid();
+    }
 });
 
 async function loadMultipleMovies(movieTitles, sectionTitle, mediaType) {
@@ -364,12 +430,8 @@ function triggerSuggestion(type) {
 suggestMovieBtn.addEventListener('click', () => triggerSuggestion('movie'));
 suggestSeriesBtn.addEventListener('click', () => triggerSuggestion('series'));
 
-searchForm.addEventListener('submit', async function(event) {
-    event.preventDefault(); 
-    const rawSearchTerm = searchInput.value.trim();
+async function performSearch(rawSearchTerm, type) {
     const title = sanitizeTurkishChars(rawSearchTerm);
-    const type = typeFilter.value;
-    
     if (title === '') return;
 
     movieResults.innerHTML = '';
@@ -408,6 +470,21 @@ searchForm.addEventListener('submit', async function(event) {
     } catch (error) {
         Swal.fire({ icon: 'warning', title: 'Bağlantı Hatası', text: 'Sunucuya bağlanılamadı.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#e5c07b' });
     }
+}
+
+searchForm.addEventListener('submit', function(event) {
+    event.preventDefault(); 
+    const rawSearchTerm = searchInput.value.trim();
+    const type = typeFilter.value;
+    
+    if (rawSearchTerm === '') return;
+
+    // ARAMA YAPILDIĞINDA DURUMU LOCALSTORAGE'A KAYDET
+    localStorage.setItem('lastView', 'search');
+    localStorage.setItem('lastSearchTerm', rawSearchTerm);
+    localStorage.setItem('lastSearchType', type);
+
+    performSearch(rawSearchTerm, type);
 });
 
 async function showSingleMovie(id) {
