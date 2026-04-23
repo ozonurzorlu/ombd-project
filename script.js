@@ -26,7 +26,6 @@ const clapper = document.getElementById('clapper');
 
 const fallbackPoster = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='350' style='background-color:%231e293b;'%3E%3Ctext y='50%25' x='50%25' dominant-baseline='middle' text-anchor='middle' font-size='30' fill='white' font-family='sans-serif'%3EAfis Yok%3C/text%3E%3C/svg%3E";
 
-// ########## YENİ KATEGORİLERLE GÜNCELLENMİŞ DEV VERİTABANI ##########
 const movieDatabase = {
     'Populer': ['Interstellar', 'The Dark Knight', 'Inception', 'The Matrix', 'The Godfather', 'Pulp Fiction', 'Forrest Gump', 'Fight Club'],
     'Aksiyon': ['Mad Max: Fury Road', 'John Wick', 'Die Hard', 'Gladiator', 'The Terminator', 'Lethal Weapon', 'Speed', 'Predator'],
@@ -52,9 +51,6 @@ const seriesDatabase = {
     'Animasyon': ['Arcane', 'Rick and Morty', 'BoJack Horseman', 'Avatar: The Last Airbender', 'Batman: The Animated Series', 'Invincible', 'Cyberpunk: Edgerunners', 'The Simpsons'],
     'Suc': ['Breaking Bad', 'Peaky Blinders', 'Narcos', 'The Sopranos', 'Boardwalk Empire', 'Snowfall', 'Sons of Anarchy', 'Gomorrah']
 };
-// ####################################################################
-
-const allMoviesToSuggest = Object.values(movieDatabase).flat();
 
 let activeCategory = 'Populer';
 let activeCategoryName = 'POPÜLER';
@@ -449,6 +445,7 @@ function displayMovieGridCard(movie) {
     movieResults.insertAdjacentHTML('beforeend', card);
 }
 
+// ########## DÜZELTİLEN YER: RENKLERİN KONTRASTI ARTIRILDI ##########
 function displayMovieDetailed(movie) {
     const posterSrc = movie.Poster !== "N/A" ? movie.Poster : fallbackPoster;
     let badgeColor = "bg-warning text-dark"; 
@@ -470,12 +467,12 @@ function displayMovieDetailed(movie) {
                             <h2 class="card-title title-cinematic">${movie.Title} <span class="text-white-50 fs-4" style="text-shadow: none;">(${movie.Year})</span></h2>
                             <hr class="border-secondary my-3">
                             <div class="row mb-3">
-                                <div class="col-6"><p class="card-text"><strong>🎬 Tür:</strong> ${movie.Genre}</p></div>
-                                <div class="col-6"><p class="card-text"><strong>⭐ IMDB:</strong> <span class="badge ${badgeColor} fs-6">${movie.imdbRating}</span></p></div>
+                                <div class="col-6"><p class="card-text text-white"><strong class="text-warning">🎬 Tür:</strong> ${movie.Genre}</p></div>
+                                <div class="col-6"><p class="card-text text-white"><strong class="text-warning">⭐ IMDB:</strong> <span class="badge ${badgeColor} fs-6">${movie.imdbRating}</span></p></div>
                             </div>
-                            <p class="card-text text-warning"><strong>🎥 Yönetmen:</strong> <span class="text-white">${movie.Director}</span></p>
-                            <p class="card-text text-info"><strong>🎭 Oyuncular:</strong> <span class="text-white">${movie.Actors}</span></p>
-                            <p class="card-text mt-3 text-white-50" style="font-size: 1.05rem; line-height: 1.6;">${movie.Plot}</p>
+                            <p class="card-text text-white"><strong class="text-warning">🎥 Yönetmen:</strong> ${movie.Director}</p>
+                            <p class="card-text text-white"><strong class="text-warning">🎭 Oyuncular:</strong> ${movie.Actors}</p>
+                            <p class="card-text mt-3 text-white" style="font-size: 1.05rem; line-height: 1.6; opacity: 0.9;">${movie.Plot}</p>
                             <div class="d-flex gap-3 mt-4 pt-3 border-top border-secondary">
                                 <a href="${trailerLink}" target="_blank" class="btn btn-danger px-4">▶ Fragman İzle</a>
                                 <button id="favBtn-${movie.imdbID}" class="btn ${isFav ? 'btn-warning' : 'btn-outline-warning'} px-4" 
